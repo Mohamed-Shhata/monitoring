@@ -1,0 +1,31 @@
+{
+ "collection_info": {
+  "namespace": "m4eba",
+  "name": "haproxy",
+  "version": "0.2.0",
+  "authors": [
+   "m4eba"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "haproxy",
+   "keepalived"
+  ],
+  "description": "An ansible collection to install haproxy and keepalived",
+  "license": [],
+  "license_file": "LICENSE",
+  "dependencies": {},
+  "repository": "http://github.com/m4eba/ansible-haproxy",
+  "documentation": null,
+  "homepage": null,
+  "issues": "http://github.com/m4eba/ansible-haproxy/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "1f6c3415129d98603ea752c972a6a8e8ea3786486903f0c6aab7859d976606dc",
+  "format": 1
+ },
+ "format": 1
+}

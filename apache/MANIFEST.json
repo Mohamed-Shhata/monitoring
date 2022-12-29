@@ -1,0 +1,34 @@
+{
+ "collection_info": {
+  "namespace": "mafalb",
+  "name": "apache",
+  "version": "0.0.2",
+  "authors": [
+   "Markus Falb <markus.falb@mafalb.at>"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "apache"
+  ],
+  "description": "Ansible collection mafalb.apache",
+  "license": [
+   "GPL-3.0-or-later"
+  ],
+  "license_file": null,
+  "dependencies": {
+   "mafalb.scl": "*"
+  },
+  "repository": "https://github.com/mafalb/ansible-collection-ansible",
+  "documentation": "https://github.com/mafalb/ansible-collection-apache",
+  "homepage": "https://github.com/mafalb/ansible-collection-apache",
+  "issues": "https://github.com/mafalb/ansible-collection-apache/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "199df49711351776a085a0ddd2299960fd329b30710b95bb66219c78adfc9b3a",
+  "format": 1
+ },
+ "format": 1
+}

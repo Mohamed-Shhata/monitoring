@@ -1,0 +1,18 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: include variables
+  include_tasks:
+    file: vars.yml
+
+# the content of state was validated in vars.yml
+# we need a default for ansible <2.11
+#
+- name: include tasks
+  include_tasks:
+    file: "{{ do|default('main') }}/{{ state|default('present') }}.yml"
+  when: do|default('main') not in ['vars']
+
+...

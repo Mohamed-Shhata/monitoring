@@ -1,0 +1,59 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: ci_group
+
+  tasks:
+
+  - name: httpd is working
+    get_url:
+      url: http://{{ inventory_hostname }}
+      dest: /tmp/{{ inventory_hostname }}.html
+
+  - name: checks for RedHat
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/httpd/conf/httpd.conf
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/httpd/conf.d/bla.conf
+      - /etc/httpd/conf.d/bla1.conf
+      register: _test
+      failed_when: _test.rc == 0
+
+    when: ansible_os_family == 'RedHat'
+
+
+  - name: checks for Debian
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-available/bla.conf
+      - /etc/apache2/conf-available/bla1.conf
+      - /etc/apache2/apache2.conf
+
+    - name: config files are symlinked
+      command: test -h {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-enabled/bla.conf
+      - /etc/apache2/conf-enabled/bla1.conf
+      register: _test
+      failed_when: _test.rc == 0
+
+    when: ansible_os_family == 'Debian'
+
+...

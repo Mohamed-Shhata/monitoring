@@ -1,0 +1,55 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: Set up proxy
+  hosts: proxy_group
+
+  module_defaults:
+    apt:
+      update_cache: true
+
+  pre_tasks:
+
+  # https://github.com/geerlingguy/ansible-role-composer/issues/54
+  # note that older systemd has no --wait
+  # therefore the loop
+  #
+  - name: Wait for systemd to complete initialization. # noqa 303
+    command: systemctl is-system-running --wait
+    register: _has_booted
+    until: _has_booted.stdout in ['running','degraded']
+    retries: 120
+    delay: 1
+    changed_when: false
+    failed_when: false
+
+  - name: update apt cache
+    package:
+
+  roles:
+
+  - name: mafalb.squid.server
+
+
+- name: Set up apache
+  hosts: ci_group
+
+  vars:
+    proxy:
+      http_proxy: http://ci-proxy:3128
+      https_proxy: http://ci-proxy:3128
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    httpd_cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+    - dest: bla1.conf
+      yaml:
+        LogFormat: '"%h gugu" justforCI'
+
+...

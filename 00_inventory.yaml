@@ -1,0 +1,24 @@
+# all:
+#   children:
+#     monitor:
+#       hosts:
+#         172.17.0.2
+#     others:
+#       hosts:
+#         172.17.0.5:
+#         172.17.0.4:
+#         172.17.0.3:
+
+[mysqlgroup]
+#192.168.43.215 ansible_ssh_user=root   ansible_ssh_pass=cr74
+#192.168.1.161 ansible_ssh_user=root   ansible_ssh_pass=root
+192.168.1.162 ansible_ssh_user=root   ansible_ssh_pass=root
+#192.168.0.192 ansible_ssh_user=root   ansible_ssh_pass=root
+#192.168.1.163 ansible_ssh_user=root   ansible_ssh_pass=root
+[apachegroup]
+#192.168.0.117 ansible_ssh_user=root   ansible_ssh_pass=centos
+#192.168.0.118 ansible_ssh_user=root   ansible_ssh_pass=centos
+[haproxygroup]
+#192.168.1.84 ansible_ssh_user=root   ansible_ssh_pass=centos
+#192.168.1.62 ansible_ssh_user=root   ansible_ssh_pass=centos
+

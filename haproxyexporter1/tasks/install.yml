@@ -1,0 +1,67 @@
+---
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ haproxy_exporter_dependencies }}"
+
+- name: Create the haproxy_exporter group
+  group:
+    name: "{{ haproxy_exporter_system_group }}"
+    state: present
+    system: true
+  when: haproxy_exporter_system_group != "root"
+
+- name: Create the haproxy_exporter user
+  user:
+    name: "{{ haproxy_exporter_system_user }}"
+    groups: "{{ haproxy_exporter_system_group }}"
+    append: true
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    home: /
+  when: haproxy_exporter_system_user != "root"
+
+- name: Download haproxy_exporter binary to local folder
+  become: false
+  get_url:
+    url: "https://github.com/prometheus/haproxy_exporter/releases/download/v{{ haproxy_exporter_version }}/haproxy_exporter-{{ haproxy_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    dest: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    checksum: "sha256:{{ haproxy_exporter_checksum }}"
+  register: _download_binary
+  until: _download_binary is succeeded
+  retries: 5
+  delay: 2
+  delegate_to: localhost
+  check_mode: false
+
+- name: install unzip (need for unpack/unarchive)
+  ansible.builtin.package:
+    name: unzip
+    state: present
+
+- name: Unpack haproxy_exporter binary
+  become: false
+  unarchive:
+    src: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    dest: "/tmp"
+    creates: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-{{ go_arch }}/haproxy_exporter"
+  delegate_to: localhost
+  check_mode: false
+
+- name: Create /usr/local/bin
+  file:
+    path: /usr/local/bin
+    state: directory
+    mode: 0755
+
+- name: Propagate haproxy_exporter binaries
+  copy:
+    src: "/tmp/haproxy_exporter-{{ haproxy_exporter_version }}.linux-{{ go_arch }}/haproxy_exporter"
+    dest: "/usr/local/bin/haproxy_exporter"
+    mode: 0750
+    owner: "{{ haproxy_exporter_system_user }}"
+    group: "{{ haproxy_exporter_system_group }}"
+  notify: restart haproxy_exporter
+  when: not ansible_check_mode

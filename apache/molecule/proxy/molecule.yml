@@ -1,0 +1,80 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+dependency:
+  name: galaxy
+  options:
+    role-file: idontexist.yml   # avoid warning while running molecule
+    requirements-file: molecule/default/requirements.yml
+
+driver:
+  name: docker
+
+platforms:
+# only centos7 has scl, so check on centos7 by default
+# --> we can share molecule.yml between scenarios
+- name: ${CI_HOSTNAME:-centos7}
+  image: ${CI_IMAGE:-quay.io/centos/centos:7}
+  command: /lib/systemd/systemd
+  network_mode: bridge
+  docker_networks:
+  - name: molecule-internal
+    internal: true
+  networks:
+  - name: molecule-internal
+  volumes:
+  - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  tmpfs:
+  - /tmp
+  - /run
+  - /run/lock
+  capabilities:
+  - SYS_ADMIN
+  privileged: ${CI_PRIVILEGED:-false}
+  pre_build_image: ${CI_CONTAINER_PREBUILT:-false}
+  tty: true
+  groups:
+  - ci_group
+
+- name: ci-proxy
+  # save time and use ubuntu because it is locally cached on runner
+  image: ubuntu:20.04
+  command: /lib/systemd/systemd
+  network_mode: bridge
+  networks:
+  - name: molecule-external
+  - name: molecule-internal
+  volumes:
+  - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+  tmpfs:
+  - /tmp
+  - /run
+  - /run/lock
+  capabilities:
+  - SYS_ADMIN
+  pre_build_image: ${CI_CONTAINER_PREBUILT:-false}
+  tty: true
+  groups:
+  - infrastructure_group
+  - proxy_group
+
+provisioner:
+  name: ansible
+  ansible_args:
+    - --tags=all,debug
+    - --diff
+  config_options:
+    defaults:
+      gathering: smart
+      interpreter_python: auto
+  lint:
+    name: ansible-lint
+
+verifier:
+  name: ansible
+  lint:
+    name: ansible-lint
+
+...

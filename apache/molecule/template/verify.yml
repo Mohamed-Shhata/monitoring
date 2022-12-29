@@ -1,0 +1,63 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: ci_group
+
+  tasks:
+
+  - name: httpd is working
+    get_url:
+      url: http://{{ inventory_hostname }}
+      dest: /tmp/{{ inventory_hostname }}.html
+
+  - name: checks for RedHat
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/httpd/conf.d/test.conf
+
+    - name: our template was used
+      command: grep -q 0443cbbdbee3 /etc/httpd/conf/httpd.conf
+
+    when: ansible_os_family == 'RedHat'
+
+  - name: checks for Debian
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-available/test.conf
+
+    - name: config files are symlinked
+      command: test -h {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-enabled/test.conf
+
+    - name: our template was used
+      command: grep -q 0443cbbdbee3 /etc/apache2/apache2.conf
+      changed_when: false
+
+    when: ansible_os_family == 'Debian'
+
+
+- name: Verify vars
+  hosts: ci_group
+  roles:
+  - role: mafalb.apache.httpd
+    do: vars
+  tasks:
+  - name: assertions
+    assert:
+      that:
+      - httpd_main_cfg is defined
+
+...

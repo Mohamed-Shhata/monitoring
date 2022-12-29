@@ -1,0 +1,70 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: create a template that can be used later
+  hosts: localhost
+
+  tasks:
+
+  - name: temp dir is present
+    file:
+      path: "{{ lookup('env','MOLECULE_EPHEMERAL_DIRECTORY') }}/tmp"
+      state: directory
+      mode: '0755'
+
+  - name: template.d dir is present
+    file:
+      path: "{{ lookup('env','MOLECULE_EPHEMERAL_DIRECTORY') }}/tmp/my_template.d"
+      state: directory
+      mode: '0755'
+    register: __tempdir
+
+  - name: fragment 1 is present
+    copy:
+      content: |
+        {# this is a variation of mafalb.apache.httpd.conf.j2 #}
+        # for ci: c0be3a657e87
+        #
+      dest: "{{ __tempdir.path }}/fragment1.j2"
+      mode: '644'
+
+  - name: fragment 2 is present
+    copy:
+      src: "{{ playbook_dir }}/../../roles/httpd/templates/mafalb.apache.httpd.conf.j2"
+      dest: "{{ __tempdir.path }}/"
+      mode: '644'
+
+  - name: my_template.j2 is present
+    assemble:
+      src: "{{ __tempdir.path }}"
+      dest: /tmp/my_template.j2
+      mode: "644"
+
+- name: converge apache
+  hosts: ci_group
+
+  vars:
+    httpd_default_template: /tmp/my_template.j2
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    httpd_cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+    - dest: bla1.conf
+      yaml:
+        LogFormat: '"%h gugu" justforCI'
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/var/www/html/index.html"
+      mode: '644'
+
+...

@@ -1,0 +1,10 @@
+---
+
+_apache_exporter_arch_map:
+  i386: '386'
+  x86_64: 'amd64'
+  aarch64: 'arm64'
+  armv7l: 'armv7'
+  armv6l: 'armv6'
+
+apache_exporter_arch: "{{ _apache_exporter_arch_map[ansible_architecture] }}"

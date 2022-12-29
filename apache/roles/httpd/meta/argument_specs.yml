@@ -1,0 +1,116 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+argument_specs:  # noqa 701
+  main:
+    short_description: Install, configure and start apache
+    description:
+    - Install, configure and start apache.
+    - The main entry point.
+
+    options: &arguments_for_main_entrypoint
+
+      do:
+        description: Define the wanted action
+        type: str
+        choices:
+        - 'cfg'
+        - 'vars'
+
+      state:
+        description:
+        - The state of apache
+        type: str
+        choices:
+        - absent
+        - cfg
+        - present
+        - vars
+        default: present
+
+      httpd_cfgs:
+        description:
+        - A list of configuration files.
+        type: list
+        elements: dict
+        aliases:
+        - cfgs
+        mutually_exclusive:
+        - - 'src'
+          - 'yaml'
+        required_one_of:
+        - - 'src'
+          - 'yaml'
+        options:
+          dest:
+            description:
+            - The target file of the configuration.
+            - If it's not given as an absolute path, it's relative to C(httpd_basedir)
+            - if set to '_main_config' it will be substituted by C(httpd_main_cfg)
+            type: str
+            required: true
+          src:
+            description:
+            - The jinja2 template to use for the configuration.
+            - The default is a template provided by the role.
+            type: str
+            default: 'mafalb.apache.httpd.conf.j2'
+          yaml:
+            description: The configuration as a YAML dict.
+            type: dict
+
+      httpd_service_managed:
+        description:
+        - Is the service managed?
+        - If false do not try to start or stop apache httpd.
+        type: bool
+        default: true
+
+      httpd_service_enabled:
+        description:
+        - Is the service supposed to be running?
+        - If false stop it, if true start it.
+        - This has no effect if C(httpd_service_managed) is set to true.
+        type: bool
+        default: true
+
+      httpd_service_restart_state:
+        description:
+        - By default httpd is reloaded (apachectl graceful).
+        - Set C(httpd_service_restart_state) to restarted (apachectl restart) if needed.
+        type: str
+        choices:
+        - reloaded
+        - restarted
+        default: reloaded
+
+      httpd_cfg_mode:
+        description: The mode of the config files.
+        type: str
+        default: '644'
+
+      httpd_default_template:
+        description:
+        - The default jinja2 template.
+        - The default default [sic] template is provided by the role.
+        type: str
+        default: 'mafalb.apache.httpd.conf.j2'
+
+      httpd_different_vhosts_d:
+        description:
+        - A directory for config snippets relative to C(httpd_basedir).
+        type: str
+        default: 'conf.d'
+
+      httpd_scl_prefix:
+        description: The SCL prefix if apache httpd is installed as SCL.
+        type: str
+
+      httpd_cfg_set_group:
+        description:
+        - Set groupship of config files to primary group of apache httpd.
+        type: bool
+
+...

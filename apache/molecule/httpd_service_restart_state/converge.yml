@@ -1,0 +1,44 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: converge apache
+  hosts: all,!infrastructure_group
+
+  pre_tasks:
+
+  - name: alternative documentroot is present
+    file:
+      path: "/var/www/html2"
+      state: directory
+      mode: "0755"
+
+  roles:
+
+  # apache won't be running afterwards
+  - role: mafalb.apache.httpd
+  - role: mafalb.apache.httpd
+    cfgs:
+    - yaml:
+        DocumentRoot: /var/www/html2
+        Directory:
+          _Directory: /var/www/html2
+          Require: all granted
+      dest: reload_trigger.conf
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/var/www/html/index.html"
+      mode: '644'
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }} alternative documentroot"
+      dest: "/var/www/html2/index.html"
+      mode: '644'
+
+...

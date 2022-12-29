@@ -1,0 +1,29 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+httpd_packages:
+- apache2
+
+httpd_has_vhosts_d: true
+
+httpd_configtest: /usr/sbin/apache2ctl configtest
+httpd_service: apache2
+httpd_user: www-data
+
+httpd_documentroot: /var/www/html
+httpd_basedir: /etc/apache2
+httpd_logdir: /var/log/apache2
+httpd_pidfile: /var/run/apache2/apache2.pid
+httpd_main_cfg: /etc/apache2/apache2.conf
+
+httpd_conf_d: /etc/apache2/conf-enabled
+httpd_vhosts_d: /etc/apache2/sites-enabled
+httpd_modules_d: /etc/apache2/mods-enabled
+
+httpd_conf_d_wr: /etc/apache2/conf-available
+httpd_vhosts_d_wr: /etc/apache2/sites-available
+httpd_modules_d_rw: /etc/apache2/mods-available
+
+...

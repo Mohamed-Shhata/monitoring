@@ -1,0 +1,15 @@
+molecule/absent/templates/ symlinks
+molecule/cfg_absent/templates/ symlinks
+molecule/httpd_default_template/templates/ symlinks
+molecule/httpd_service_enabled/roles/ symlinks
+molecule/httpd_service_enabled/templates/ symlinks
+molecule/httpd_service_managed_1/roles/ symlinks
+molecule/httpd_service_managed_1/templates/ symlinks
+molecule/httpd_service_managed_2/roles/ symlinks
+molecule/httpd_service_managed_2/templates/ symlinks
+molecule/httpd_service_restart_state/roles/ symlinks
+molecule/httpd_service_restart_state/templates/ symlinks
+molecule/proxy/templates/ symlinks
+molecule/scl/roles/ symlinks
+molecule/scl/templates/ symlinks
+molecule/template/templates/ symlinks

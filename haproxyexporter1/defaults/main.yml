@@ -1,0 +1,7 @@
+---
+haproxy_exporter_version: 0.10.0
+haproxy_exporter_web_listen_address: "0.0.0.0:9101"
+haproxy_exporter_scrape_uri: "http://localhost/;csv"
+
+haproxy_exporter_system_group: "haproxy-exp"
+haproxy_exporter_system_user: "{{ haproxy_exporter_system_group }}"

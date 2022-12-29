@@ -1,0 +1,27 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: converge apache
+  hosts: all,!infrastructure_group
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    do: cfg
+    state: absent
+    httpd_cfgs:
+    - dest: _main_config
+    - dest: bla.conf
+    - dest: bla1.conf
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/var/www/html/index.html"
+      mode: '644'
+
+...

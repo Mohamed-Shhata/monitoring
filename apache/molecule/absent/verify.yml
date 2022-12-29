@@ -1,0 +1,21 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: all,!infrastructure_group
+
+  tasks:
+
+    - name: get package list
+      package_facts:
+
+    - name: assert that apache httpd is not installed
+      assert:
+        that:
+        - "'httpd' not in ansible_facts.packages"
+        - "'httpd24-httpd' not in ansible_facts.packages"
+        - "'apache2' not in ansible_facts.packages"
+
+...

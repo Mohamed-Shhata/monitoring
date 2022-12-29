@@ -1,0 +1,17 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: reload httpd
+  service:
+    name: "{{ httpd_service }}"
+    state: "{{ httpd_service_restart_state }}"
+  # don't reload if it has just started
+  when: not _httpd_has_started.changed|default(false)
+  listen:
+  - check for changed cert
+  - check for changed key
+  - check for changed chain
+
+...

@@ -1,0 +1,56 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: all,!infrastructure_group
+
+  tasks:
+
+  - name: httpd is working
+    delegate_to: ci-proxy
+    get_url:
+      url: http://{{ inventory_hostname }}
+      dest: /tmp/{{ inventory_hostname }}.html
+
+  - name: checks for RedHat
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/httpd/conf.d/bla.conf
+      - /etc/httpd/conf.d/bla1.conf
+
+    - name: check bla1.conf
+      command: grep gugu /etc/httpd/conf.d/bla1.conf
+      changed_when: false
+
+    when: ansible_os_family == 'RedHat'
+
+  - name: checks for Debian
+    block:
+
+    - name: config files are present
+      command: test -f {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-available/bla.conf
+      - /etc/apache2/conf-available/bla1.conf
+
+    - name: config files are symlinked
+      command: test -h {{ item }}
+      changed_when: false
+      loop:
+      - /etc/apache2/conf-enabled/bla.conf
+      - /etc/apache2/conf-enabled/bla1.conf
+
+    - name: check bla1.conf
+      command: grep gugu /etc/apache2/conf-enabled/bla1.conf
+      changed_when: false
+
+    when: ansible_os_family == 'Debian'
+
+...

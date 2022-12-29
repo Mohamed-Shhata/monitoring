@@ -1,0 +1,10 @@
+---
+
+- name: APACHE_EXPORTER | Copy logrotate config
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/apache_exporter
+    mode: 0644
+    owner: root
+    group: root
+  when: apache_exporter_log_path is defined and apache_exporter_logrotate_enabled

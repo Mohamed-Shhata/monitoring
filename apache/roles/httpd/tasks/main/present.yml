@@ -1,0 +1,51 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: apache is present
+  package:
+    name: "{{ httpd_packages }}"
+  environment: "{{ proxy|default({}) }}"
+
+- name: SCL only
+  block:
+  - name: SCL only - directory in /etc/opt is present
+    file:
+      path: /etc/opt/{{ httpd_scl_provider }}
+      state: directory
+      mode: "0755"
+  - name: SCL only - symlink in /etc/opt is present
+    file:
+      src: "{{ httpd_basedir }}"
+      dest: /etc/opt/{{ httpd_scl_provider }}/{{ httpd_scl_prefix }}
+      state: link
+  when: httpd_scl_prefix is defined
+
+- name: directory for vhosts config is present
+  block:
+  - name: additional directories are present
+    file:
+      path: "{{ httpd_vhosts_d }}"
+      state: directory
+      mode: '755'
+  when: not httpd_has_vhosts_d
+
+- name: apache config
+  block:
+  - name: apache config is present
+    include_tasks:
+      file: "{{ role_path }}/tasks/cfg/present.yml"
+    vars:
+      do: cfg
+  when: httpd_cfgs is defined or cfgs is defined
+
+- name: apache is started
+  service:
+    name: "{{ httpd_service }}"
+    state: started
+    enabled: "{{ httpd_service_enabled }}"
+  when: httpd_service_managed
+  register: _httpd_has_started
+
+...

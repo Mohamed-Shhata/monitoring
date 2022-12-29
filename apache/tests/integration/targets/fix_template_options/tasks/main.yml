@@ -1,0 +1,6 @@
+---
+
+- name: fix httpd_templates dict
+  mafalb.apache.fix_template_options:
+
+...

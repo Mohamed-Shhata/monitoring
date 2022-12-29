@@ -1,0 +1,20 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: all,!infrastructure_group
+
+  tasks:
+
+  - name: httpd is not running
+    wait_for:
+      port: 80
+      state: stopped
+      timeout: 5
+    ignore_errors: true
+    register: _res
+    failed_when: (_res.failed)
+
+...

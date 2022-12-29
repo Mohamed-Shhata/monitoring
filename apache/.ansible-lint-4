@@ -1,0 +1,4 @@
+# older ansible-lint can't do custom modules in collections
+#
+exclude_paths:
+  - roles/httpd/tasks/vars.yml

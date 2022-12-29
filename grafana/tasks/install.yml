@@ -1,0 +1,137 @@
+# ---
+
+# - block:
+#     - name: Update apt cache
+#       apt:
+#         update_cache: true
+#       register: _pre_update_apt_cache
+#       until: _pre_update_apt_cache is succeeded
+#       when:
+#         - ansible_pkg_mgr == "apt"
+
+#     - name: Install dependencies
+#       package:
+#         name: "{{ grafana_dependencies }}"
+#         state: present
+#       register: _install_dep_packages
+#       until: _install_dep_packages is succeeded
+#       retries: 5
+#       delay: 2
+
+# - name: Remove conflicting grafana packages
+#   package:
+#     name: grafana-data
+#     state: absent
+#   register: _old_grafana_pkgs
+
+# - name: Clean apt cache
+#   command: apt clean
+#   when:
+#     - _old_grafana_pkgs is changed
+#     - ansible_pkg_mgr == "apt"
+
+# - name: Add Grafana repository file [RHEL/CentOS]
+#   template:
+#     src: "{{ grafana_yum_repo_template }}"
+#     dest: "/etc/yum.repos.d/{{ grafana_yum_repo_template | basename | regex_replace('\\.j2$', '') }}"
+#     force: true
+#     backup: true
+#   when: ansible_pkg_mgr in ['yum', 'dnf']
+
+# - block:
+#     - name: Import Grafana GPG signing key [Debian/Ubuntu]
+#       apt_key:
+#         path: "/home/mohamed/ansible/test/ansible-node_exporter-prometheus-grafana/src/gpg.key"
+#         state: present
+#         validate_certs: false
+#       register: _add_apt_key
+#       until: _add_apt_key is succeeded
+#       retries: 5
+#       delay: 2
+
+#     - name: Add Grafana repository [Debian/Ubuntu]
+#       apt_repository:
+#         repo: deb https://packages.grafana.com/oss/deb stable main
+#         state: present
+#         update_cache: true
+#       register: _update_apt_cache
+#       until: _update_apt_cache is succeeded
+#       retries: 5
+#       delay: 2
+#   when:
+#     - ansible_pkg_mgr == "apt"
+#   environment: "{{ grafana_environment }}"
+
+# - name: Install Grafana
+#   package:
+#     name: "{{ grafana_package }}"
+#     state: "present"
+#   register: _install_packages
+#   until: _install_packages is succeeded
+#   retries: 5
+#   delay: 2
+#   notify: restart grafana
+
+- name: Download Grafana Agent binary
+  copy:
+    src: "/home/mohamed/ansible/test/ansible-node_exporter-prometheus-grafana/src/agent-linux-amd64.tar.xz"
+    dest: "/tmp/agent-linux.zip"
+    # mode: '0644'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Unarchive Grafana Agent binary
+  unarchive:
+    src: "/tmp/agent-linux.zip"
+    dest: "/usr/local/bin"
+    remote_src: yes
+    mode: '0755'
+    list_files: "yes"
+  register: list_files
+  # when: artifact_extension in ["tar.gz", "tgz", "tar", "zip"]
+# - name: Unarchive Grafana Agent binary
+#   ansible.builtin.unarchive:
+#     src: "/tmp/agent-linux.zip"
+#     dest: /usr/local/bin
+#     remote_src: yes
+- name: Create directory for Grafana Agent
+  file:
+    path: "{{ agent_config_location }}"
+    state: directory
+    mode: '0755'
+
+# - name: Create config file for Grafana Agent
+#   copy:
+#     src: "{{ agent_config_local_path }}"
+#     dest: "{{ agent_config_location }}/agent-config.yaml"
+#     remote_src: yes
+
+- name: Add user 'grafana-agent'
+  user:
+    name: grafana-agent
+    create_home: no
+    shell: /bin/false
+
+- name: Create service file for Grafana Agent
+  copy:
+    dest: "/etc/systemd/system/grafana-agent.service"
+    content: |
+      [Unit]
+      Description=Grafana Agent
+
+      [Service]
+      User=grafana-agent
+      ExecStart={{ agent_binary_location }}/agent-{{ linux_architecture }} --config.file={{ agent_config_location }}/agent-config.yaml
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Start Grafana Agent service
+  systemd:
+    daemon_reload: yes
+    name: grafana-agent
+    enabled: yes
+    state: restarted
+

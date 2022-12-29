@@ -1,0 +1,53 @@
+---
+- name: APACHE_EXPORTER | Ensure apache_exporter group
+  group:
+    name: "{{ apache_exporter_group }}"
+    system: true
+    state: present
+
+- name: APACHE_EXPORTER | Ensure apache_exporter user
+  user:
+    name: "{{ apache_exporter_user }}"
+    group: "{{ apache_exporter_group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    createhome: false
+
+- name: APACHE_EXPORTER | Ensure skeleton paths
+  file:
+    path: "{{ item }}"
+    owner: "{{ apache_exporter_user }}"
+    group: "{{ apache_exporter_group }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ apache_exporter_install_path }}"
+
+- name: APACHE_EXPORTER | Ensure skeleton log paths
+  file:
+    path: "{{ item }}"
+    owner: "{{ apache_exporter_user }}"
+    group: "{{ apache_exporter_group }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - "{{ apache_exporter_log_path }}"
+  when: apache_exporter_log_path is defined
+
+- name: APACHE_EXPORTER | Download and extract package
+  unarchive:
+    copy: no
+    src: "{{ apache_exporter_url }}"
+    dest: "{{ apache_exporter_install_path }}"
+    extra_opts: "--strip-components=1"
+    mode: 0755
+    owner: "{{ apache_exporter_user }}"
+    group: "{{ apache_exporter_group }}"
+  when: not apache_exporter_is_installed or apache_exporter_is_different_version
+
+- name: APACHE_EXPORTER | Link binary
+  file:
+    src: "{{ apache_exporter_install_path }}/{{ apache_exporter_exec_name }}"
+    dest: "/usr/bin/{{ apache_exporter_exec_name }}"
+    state: link
+  when: not apache_exporter_is_installed or apache_exporter_is_different_version

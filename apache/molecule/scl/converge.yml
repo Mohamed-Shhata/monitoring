@@ -1,0 +1,36 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: converge apache
+  hosts: all,!infrastructure_group
+
+  roles:
+
+  - role: mafalb.scl.rh
+
+  - role: mafalb.apache.httpd
+    httpd_scl_prefix: httpd24
+  - role: mafalb.apache.httpd
+    httpd_scl_prefix: httpd24
+    httpd_cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/opt/rh/httpd24/root/var/www/html/index.html"
+      mode: '644'
+
+  - name: variables are present
+    when: false
+    assert:
+      that:
+      - httpd_scl_provider is defined
+
+...

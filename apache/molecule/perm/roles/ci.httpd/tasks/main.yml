@@ -1,0 +1,25 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: include mafalb.apache.httpd with scl
+  include_role:
+    name: mafalb.apache.httpd
+  vars:
+    httpd_scl_prefix: httpd24
+    httpd_templates:
+    - src: test.conf.j2
+      dest: test.conf
+  when: scl is defined
+
+- name: include mafalb.apache.httpd without scl
+  include_role:
+    name: mafalb.apache.httpd
+  vars:
+    httpd_templates:
+    - src: test.conf.j2
+      dest: test.conf
+  when: not scl is defined
+
+...

@@ -1,0 +1,20 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: Set up apache
+  hosts: ci_group
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    httpd_cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+    - dest: bla1.conf
+      yaml:
+        LogFormat: '"%h gugu" justforCI'
+
+...

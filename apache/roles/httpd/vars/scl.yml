@@ -1,0 +1,24 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+httpd_packages:
+- "{{ httpd_scl_prefix }}-httpd"
+
+httpd_configtest: 'scl enable {{ httpd_scl_prefix }} "apachectl configtest"'
+httpd_service: "{{ httpd_scl_prefix }}-httpd"
+
+httpd_documentroot: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/var/www/html
+httpd_basedir: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/etc/httpd
+httpd_logdir: /var/log/{{ httpd_scl_prefix }}
+httpd_main_cfg: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/etc/httpd/conf/httpd.conf
+
+httpd_conf_d: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/etc/httpd/conf.d
+httpd_vhosts_d: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/etc/httpd/{{ httpd_different_vhosts_d|default('conf.d') }}
+httpd_modules_d: /opt/{{ httpd_scl_provider }}/{{ httpd_scl_name }}/root/etc/httpd/conf.modules.d
+
+httpd_scl_provider: "{{ httpd_scl_prefix|mafalb.scl.provider }}"
+httpd_scl_name: "{{ httpd_scl_prefix|mafalb.scl.name }}"
+
+...

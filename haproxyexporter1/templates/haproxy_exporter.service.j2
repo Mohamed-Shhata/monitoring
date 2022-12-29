@@ -1,0 +1,32 @@
+{{ ansible_managed | comment }}
+
+[Unit]
+Description=Prometheus HAProxy Exporter
+After=network-online.target
+
+[Service]
+Type=simple
+User={{ haproxy_exporter_system_user }}
+Group={{ haproxy_exporter_system_group }}
+ExecStart=/usr/local/bin/haproxy_exporter \
+    --web.listen-address={{ haproxy_exporter_web_listen_address }} \
+    --haproxy.scrape-uri={{ haproxy_exporter_scrape_uri }}
+
+SyslogIdentifier=haproxy_exporter
+Restart=always
+
+PrivateTmp=yes
+ProtectHome=yes
+NoNewPrivileges=yes
+
+{% if haproxy_exporter_systemd_version | int >= 232 %}
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=yes
+{% else %}
+ProtectSystem=full
+{% endif %}
+
+[Install]
+WantedBy=multi-user.target

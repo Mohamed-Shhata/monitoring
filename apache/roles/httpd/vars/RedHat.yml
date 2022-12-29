@@ -1,0 +1,25 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+httpd_packages:
+- httpd
+
+httpd_has_vhosts_d: false
+
+httpd_configtest: /usr/sbin/apachectl configtest
+httpd_service: httpd
+httpd_user: apache
+
+httpd_documentroot: /var/www/html
+httpd_basedir: /etc/httpd
+httpd_logdir: /var/log/httpd
+httpd_pidfile: run/httpd.pid
+httpd_main_cfg: /etc/httpd/conf/httpd.conf
+
+httpd_conf_d: /etc/httpd/conf.d
+httpd_vhosts_d: /etc/httpd/{{ httpd_different_vhosts_d|default('conf.d') }}
+httpd_modules_d: /etc/httpd/conf.modules.d
+
+...

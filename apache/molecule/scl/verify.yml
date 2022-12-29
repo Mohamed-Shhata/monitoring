@@ -1,0 +1,23 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: ci_group
+
+  tasks:
+
+  - name: httpd is working
+    get_url:
+      url: http://{{ inventory_hostname }}
+      dest: /tmp/{{ inventory_hostname }}.html
+
+  - name: config files are present
+    command: test -f {{ item }}
+    changed_when: false
+    loop:
+    - /opt/rh/httpd24/root/etc/httpd/conf.d/bla.conf
+    - /etc/opt/rh/httpd24/conf.d/bla.conf
+
+...

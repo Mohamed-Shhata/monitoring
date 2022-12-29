@@ -1,0 +1,51 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+# only necessary if ansible does not support argument_spec
+# do not assert for ansible 2.11 and greater
+# to catch possible errors in argument_spec
+#
+- name: assert that state is valid
+  assert:
+    that:
+    - state|default('present') in ['absent','present']
+    - do|default('main') in ['main','cfg','vars']
+  when:
+  - ansible_version.full is version("2.11", '<')
+
+- name: include OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+  - "{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+  - "{{ ansible_os_family }}.yml"
+
+- name: SCL specific stuff
+  block:
+
+  - name: assert that OS is supported
+    assert:
+      that:
+      - ansible_os_family == 'RedHat'
+      - ansible_os_family != 'Fedora'
+      - ansible_distribution_major_version == '7'
+
+  - name: include SCL specific variables
+    include_vars: scl.yml
+
+  when: httpd_scl_prefix is defined
+
+- name: create modified cfgs dict
+  mafalb.apache.normalize_parameter:
+    parameter: "{{ 'cfgs' if cfgs is defined else 'httpd_cfgs' }}"
+  register: __normalized_cfgs
+  when: cfgs is defined or httpd_cfgs is defined
+
+- name: debug __normalized_cfgs
+  debug:
+    var: __normalized_cfgs
+  tags:
+  - never
+  - debug
+...

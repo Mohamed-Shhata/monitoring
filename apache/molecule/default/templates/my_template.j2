@@ -1,0 +1,61 @@
+{# this is a variation of mafalb.apache.httpd.conf.j2 #}
+# for ci: c0be3a657e87
+{#
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+-#}
+
+{# a simple directive #}
+{% macro directive(key, value, i) -%}
+{% if value|type_debug == 'list' -%}
+{% for v in value -%}
+{{ i * " " }}{{ key }} {{ v }}
+{% endfor -%}
+{% else -%}
+{{ i * " " }}{{ key }} {{ value }}
+{% endif -%}
+{% endmacro -%}
+
+{# a container section like <Directory> or <Location>
+
+Directory x:
+  _Directory: /
+  bla: blubb
+
+translates to
+
+<Directory />
+    bla blubb
+</Directory>
+
+#}
+
+{%- macro container_section(key, value, i) %}
+
+{{ i * " " }}<{{ key -}}
+{% if (value|dict2items)[0].key.startswith('_') %} {{ (value|dict2items)[0].value -}}
+{% else %}{{ "First key does not start with _"/0 -}}
+{% endif %}>
+{% for directive in (value|dict2items)[1:] -%}
+{{ config_line(directive.key, directive.value, i+4) -}}
+{% endfor -%}
+{{ i * " " }}</{{ key }}>
+
+{% endmacro -%}
+
+{# a container section or a simple directive #}
+{%- macro config_line(key, value, i) -%}
+{% if key.split()[0].lower() in httpd_container_sections -%}
+{{ container_section(key.split()[0].lower(), value, i) -}}
+{% else -%}
+{{ directive(key.split()[0], value, i) -}}
+{% endif -%}
+{% endmacro -%}
+
+# {{ ansible_managed }}
+{% set i=0 %}
+
+{% for line in httpd_cfg_dict|dict2items -%}
+{{ config_line(line.key, line.value, i) -}}
+{% endfor -%}

@@ -1,0 +1,69 @@
+- name: The Prometheus Node Exporter role
+  hosts: all
+  become: yes
+  become_method: sudo
+
+  vars:
+    prometheus_node_exporter_enabled_collectors:
+      - logind
+    prometheus_node_exporter_disabled_collectors:
+      - netstat
+
+  roles:
+    - ansible-role-prometheus-node-exporter
+
+  tags:
+    - node-exporter
+- name: install monitoring stack 
+  hosts: all
+  remote_user: root
+  become: true
+  become_method: sudo
+  roles:
+  - role: prometheus
+    vars:
+     prometheus_components:
+      - node_exporter
+      
+     prometheus_tgroup_labels:
+      environment: development
+      site: primary
+  
+- name: grafana
+  hosts: all
+  remote_user: root
+  become: true
+  roles:
+   - role: grafana
+     vars:
+       grafana_security:
+         admin_user: admin
+         admin_password: monitor123
+  
+
+
+- name: install monitoring stack for apache server
+  hosts: apachegroup
+  remote_user: root
+  become: true
+  roles:
+  - apacheExporter
+  - apache
+  
+- name: install monitoring stack for mysql server
+  hosts: mysqlgroup
+  remote_user: root
+  become: true
+  roles:
+  - mysqlExporter
+  - mysql
+- name: install monitoring stack for haproxy
+  hosts: haproxygroup
+  remote_user: root
+  become: true
+  roles:
+  - haproxyexporter1
+  
+  
+
+

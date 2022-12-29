@@ -1,0 +1,298 @@
+# vim: set ft=yaml ts=2 expandtab:
+---
+
+name: CI
+
+on:  # yamllint disable-line rule:truthy
+
+  push:
+    branches:
+    - '**'
+    tags-ignore:
+    - '*'
+  pull_request:
+  pull_request_review:
+  schedule:
+    - cron: '40 11 * * 6'
+
+jobs:
+
+  ansible-test:
+
+    # don't run on pull request from ourselves
+    #
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+
+      matrix:
+
+        include:
+
+        - ansible_version: '2.9'
+          python_version: '2.7'
+
+        - ansible_version: '2.9'
+          python_version: '3.5'
+
+        - ansible_version: '2.9'
+          python_version: '3.6'
+
+        - ansible_version: '2.9'
+          python_version: '3.7'
+
+        - ansible_version: '2.9'
+          python_version: '3.8'
+
+
+        - ansible_version: '2.10'
+          python_version: '3.6'
+
+        - ansible_version: '2.10'
+          python_version: '3.7'
+
+        - ansible_version: '2.10'
+          python_version: '3.8'
+
+        - ansible_version: '2.10'
+          python_version: '3.9'
+
+
+        - ansible_version: '2.11'
+          python_version: '3.6'
+
+        - ansible_version: '2.11'
+          python_version: '3.7'
+
+        - ansible_version: '2.11'
+          python_version: '3.8'
+
+        - ansible_version: '2.11'
+          python_version: '3.9'
+
+
+        - ansible_version: '2.12'
+          python_version: '3.8'
+
+        - ansible_version: '2.12'
+          python_version: '3.9'
+
+        - ansible_version: '2.12'
+          python_version: '3.10'
+
+
+    env:
+      PY_COLORS: 1
+      ANSIBLE_FORCE_COLOR: 1
+      ANSIBLE_PYTHON_INTERPRETER: python${{ matrix.python_version }}
+
+    defaults:
+      run:
+        working-directory: ansible_collections/mafalb/apache
+
+    steps:
+
+    - name: checkout collection mafalb.apache
+      uses: actions/checkout@v2
+      with:
+        path: ansible_collections/mafalb/apache
+
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python_version }}
+
+    # necessary ?
+    - name: install virtualenv for python 2.7
+      if: matrix.python_version == '2.7'
+      run: |
+        pip install virtualenv
+
+    - name: install a virtualenv
+      run: |
+        ansible-galaxy collection install mafalb.ansible
+        ansible-playbook -D ~/.ansible/collections/ansible_collections/mafalb/ansible/playbooks/install-ansible.yml -e '{"virtualenv_packages":["_ansible==${{ matrix.ansible_version }}","ansible-lint${{ matrix.ansible_lint_specifier }}","_ansible_test","flake8"]}' -e mafalb_ansible_virtualenv_python=python${{ matrix.python_version }} -t all,debug
+
+    - name: check ansible version
+      run: |
+        source ~/.virtualenvs/ansible/bin/activate
+        ansible --version
+        ansible --version | grep "^ansible.* ${{ matrix.ansible_version }}"
+
+    - name: check python version
+      run: |
+        source ~/.virtualenvs/ansible/bin/activate
+        ansible --version
+        ansible --version | grep "^\s*python.* ${{ matrix.python_version }}"
+
+    - name: install shellcheck
+      run: sudo apt install shellcheck
+
+    - name: lint
+      run: |
+        source ~/.virtualenvs/ansible/bin/activate
+        if ansible-lint --version|grep "^ansible-lint 4"
+        then
+            ANSIBLE_LINT_VERSION=4
+        fi
+        . tests/lint.sh requirements ${{ matrix.python_version }}
+
+    - name: sanity
+      run: |
+        source ~/.virtualenvs/ansible/bin/activate
+        ansible-test sanity --requirements --python ${{ matrix.python_version }}
+
+
+  CI:
+
+    needs: ansible-test
+
+    # don't run on pull request from ourselves
+    #
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
+    runs-on: ubuntu-20.04
+
+    strategy:
+
+      fail-fast: false
+
+      matrix:
+
+        os:
+        - fedora33
+        - fedora34
+        - fedora35
+        - c8s
+        - c9s
+        - centos7
+        - centos8
+        - rocky8
+        - alma8
+        - debian9
+        - debian10
+        - debian11
+        - ubuntu18
+        - ubuntu20
+        - ubuntu2104
+        - ubuntu2110
+
+        ansible_version:
+        - '2.9'
+        - '2.10'
+        - '2.11'
+        - '2.12'
+
+        include:
+
+        - os: fedora33
+          privileged: true
+
+        - os: fedora34
+          privileged: true
+
+        - os: fedora35
+          privileged: true
+
+        - os: c9s
+          privileged: true
+
+        - os: centos7
+          has_scl: true
+
+        # debian buster
+        - os: debian10
+          privileged: true
+
+        # debian bullseye
+        - os: debian11
+          privileged: true
+
+    env:
+      ANSIBLE_VERSION: ${{ matrix.ansible_version }}
+      CI_IMAGE: ${{ matrix.image }}
+      CI_HOSTNAME: ci-${{ matrix.os }}
+      CI_PRIVILEGED: ${{ matrix.privileged }}
+      PY_COLORS: 1
+      ANSIBLE_FORCE_COLOR: 1
+
+    defaults:
+      run:
+        working-directory: ansible_collections/mafalb/apache
+
+    steps:
+
+    - name: checkout collection mafalb.apache
+      uses: actions/checkout@v2
+      with:
+        path: ansible_collections/mafalb/apache
+
+    - name: install molecule
+      run: |
+        ansible-galaxy collection install mafalb.ansible
+        ansible-playbook -D ~/.ansible/collections/ansible_collections/mafalb/ansible/playbooks/molecule.yml -e molecule_ansible_version=${{ matrix.ansible_version }} -t all,debug
+
+    - name: check ansible version
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        ansible --version | grep "^ansible.* ${{ matrix.ansible_version }}"
+
+    - name: molecule tests
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test
+
+    - name: molecule tests with proxy
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s proxy
+
+    - name: molecule tests with scl
+      if: matrix.has_scl == true
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s scl
+
+    - name: molecule tests with custom template
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s template
+
+    - name: molecule test cfg_only
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s cfg_only
+
+    - name: molecule test for cfg_absent cfg
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s cfg_absent
+
+    - name: molecule test for absent
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s absent
+
+    - name: molecule test for perm
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s perm
+
+    - name: molecule test for httpd_default_template
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s httpd_default_template
+
+    - name: molecule test for httpd_service_managed_1
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s httpd_service_managed_1
+
+    - name: molecule test for httpd_service_managed_2
+      run: |
+        source ~/.virtualenvs/molecule/bin/activate
+        molecule -e .env-${{ matrix.os }}.yml test -s httpd_service_managed_2
+
+...

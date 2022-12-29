@@ -1,0 +1,20 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: ci_group
+
+  tasks:
+
+  - name: httpd is working
+    get_url:
+      url: http://{{ inventory_hostname }}
+      dest: /tmp/{{ inventory_hostname }}.html
+
+  - name: content is served from alternative documentroot
+    command: grep "alternative documentroot" /tmp/{{ inventory_hostname }}.html
+    changed_when: false
+
+...

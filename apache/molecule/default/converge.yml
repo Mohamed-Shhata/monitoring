@@ -1,0 +1,54 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: converge apache
+  hosts: all,!infrastructure_group
+
+  vars:
+    # to test if cfgs dict masks httpd_dests
+    # (httpd_cfgs is an alias for cfgs)
+    httpd_cfgs:
+    - utterly: nonsense
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+    - dest: bla1.conf
+      yaml:
+        LogFormat: '"%h gugu" justforCI'
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/var/www/html/index.html"
+      mode: '644'
+
+  - name: test that argument_specs.yml is used
+    block:
+    - name: call with gugu
+      include_role:
+        name: mafalb.apache.httpd
+      vars:
+        do: gugu
+    rescue:
+    - name: debug
+      debug: var=ansible_failed_task.action
+      register: _msg
+    - name: debug
+      debug: var=_msg
+    always:
+    - name: it has failed
+      assert:
+        that:
+        - _msg["ansible_failed_task.action"] in
+          ['ansible.builtin.validate_argument_spec','assert']
+
+...

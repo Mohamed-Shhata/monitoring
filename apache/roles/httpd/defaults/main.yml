@@ -1,0 +1,12 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+httpd_service_managed: true
+httpd_service_enabled: true
+httpd_service_restart_state: reloaded
+httpd_cfg_mode: '644'
+httpd_default_template: mafalb.apache.httpd.conf.j2
+
+...

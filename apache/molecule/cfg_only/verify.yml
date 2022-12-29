@@ -1,0 +1,21 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: verify
+  hosts: all,!infrastructure_group
+
+  tasks:
+
+  - name: config files are present
+    command: test -f {{ item }}
+    changed_when: false
+    loop:
+    - /root/my_httpd_config.conf
+
+  - name: check config snippet
+    command: grep gugu /root/my_httpd_config.conf
+    changed_when: false
+
+...

@@ -1,0 +1,33 @@
+# Copyright (c) 2021 Markus Falb <markus.falb@mafalb.at>
+# GNU General Public License v3.0+
+# see LICENSE or https://www.gnu.org/licenses/gpl-3.0.txt
+---
+
+- name: converge apache
+  hosts: all,!infrastructure_group
+
+  vars:
+    proxy:
+      http_proxy: http://ci-proxy:3128
+      https_proxy: http://ci-proxy:3128
+
+  roles:
+
+  - role: mafalb.apache.httpd
+    cfgs:
+    - dest: _main_config
+    - src: bla.conf.j2
+      dest: bla.conf
+    - dest: bla1.conf
+      yaml:
+        LogFormat: '"%h gugu" justforCI'
+
+  tasks:
+
+  - name: index.html is present
+    copy:
+      content: "{{ ansible_host }}"
+      dest: "/var/www/html/index.html"
+      mode: '644'
+
+...
